@@ -1,0 +1,1228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Professional Business Management Suite for Cafes">
+    <meta name="theme-color" content="#8b5cf6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Cafe Manager">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='80' font-size='80'%3E☕%3C/text%3E%3C/svg%3E">
+    <title>Cafe Manager Pro</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif;
+            background: linear-gradient(135deg, #faf5ff 0%, #fce7f3 50%, #fff1f2 100%);
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+            color: white;
+            padding: 32px 24px;
+            box-shadow: 0 8px 32px rgba(139, 92, 246, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="40" fill="rgba(255,255,255,0.05)"/></svg>');
+            opacity: 0.3;
+        }
+        
+        .header-content {
+            position: relative;
+            z-index: 1;
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+        
+        .header h1 {
+            font-size: 2.25rem;
+            font-weight: 800;
+            letter-spacing: -0.025em;
+            margin-bottom: 8px;
+        }
+        
+        .header p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.125rem;
+            font-weight: 500;
+        }
+        
+        .nav {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 16px 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            overflow-x: auto;
+            white-space: nowrap;
+            border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+        }
+        
+        .nav-container {
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+        
+        .nav button {
+            display: inline-block;
+            padding: 12px 28px;
+            margin-right: 8px;
+            border: 2px solid transparent;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: transparent;
+            color: #6b7280;
+            font-size: 0.95rem;
+        }
+        
+        .nav button:hover {
+            background: rgba(139, 92, 246, 0.08);
+            color: #8b5cf6;
+            transform: translateY(-1px);
+        }
+        
+        .nav button.active {
+            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+            color: white;
+            box-shadow: 0 8px 24px rgba(139, 92, 246, 0.35);
+            border-color: transparent;
+        }
+        
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 32px 24px;
+        }
+        
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.4s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 20px;
+            padding: 28px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+            border: 1px solid rgba(139, 92, 246, 0.1);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(139, 92, 246, 0.15);
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--accent-color), var(--accent-color-light));
+        }
+        
+        .stat-card.green {
+            --accent-color: #10b981;
+            --accent-color-light: #34d399;
+        }
+        
+        .stat-card.red {
+            --accent-color: #ef4444;
+            --accent-color-light: #f87171;
+        }
+        
+        .stat-card.blue {
+            --accent-color: #3b82f6;
+            --accent-color-light: #60a5fa;
+        }
+        
+        .stat-card.purple {
+            --accent-color: #8b5cf6;
+            --accent-color-light: #a78bfa;
+        }
+        
+        .stat-label {
+            color: #6b7280;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .stat-value {
+            font-size: 2.25rem;
+            font-weight: 800;
+            letter-spacing: -0.025em;
+        }
+        
+        .stat-value.green {
+            color: #10b981;
+        }
+        
+        .stat-value.red {
+            color: #ef4444;
+        }
+        
+        .stat-value.blue {
+            color: #3b82f6;
+        }
+        
+        .stat-value.purple {
+            color: #8b5cf6;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+            margin-bottom: 32px;
+            border: 1px solid rgba(139, 92, 246, 0.1);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid rgba(139, 92, 246, 0.1);
+        }
+        
+        .card h2 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #1f2937;
+            letter-spacing: -0.025em;
+        }
+        
+        .card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 16px;
+            color: #374151;
+            font-weight: 600;
+        }
+        
+        .btn {
+            padding: 12px 28px;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            box-shadow: 0 8px 24px rgba(139, 92, 246, 0.4);
+        }
+        
+        .btn-green {
+            background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+            color: white;
+        }
+        
+        .btn-red {
+            background: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
+            color: white;
+        }
+        
+        .btn-blue {
+            background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+            color: white;
+        }
+        
+        .btn-outline {
+            background: white;
+            color: #8b5cf6;
+            border: 2px solid #8b5cf6;
+        }
+        
+        .btn-outline:hover {
+            background: #8b5cf6;
+            color: white;
+        }
+        
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 0.875rem;
+        }
+        
+        .btn-icon {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+        }
+        
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+        }
+        
+        .item-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+            border: 1px solid rgba(139, 92, 246, 0.08);
+            transition: all 0.3s ease;
+        }
+        
+        .item-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(139, 92, 246, 0.12);
+        }
+        
+        .record {
+            background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid rgba(139, 92, 246, 0.1);
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #8b5cf6;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #374151;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+        
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 24px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 32px;
+            border-radius: 24px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: modalSlideIn 0.3s ease;
+        }
+        
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        .modal-content h2 {
+            margin-bottom: 24px;
+            color: #1f2937;
+            font-size: 1.5rem;
+        }
+        
+        .alert {
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        
+        .alert.warning {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fcd34d;
+        }
+        
+        .alert.success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #6ee7b7;
+        }
+        
+        .low-stock {
+            color: #ef4444;
+            font-weight: 600;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .badge-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .badge-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .badge-danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        /* PDF Button Styles */
+        .pdf-download-btn {
+            background: linear-gradient(135deg, #dc2626 0%, #f97316 100%);
+            color: white;
+            padding: 14px 32px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 4px 16px rgba(220, 38, 38, 0.3);
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .pdf-download-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 32px rgba(220, 38, 38, 0.4);
+        }
+        
+        .pdf-download-btn:active {
+            transform: translateY(-1px);
+        }
+        
+        .pdf-download-btn::before {
+            content: '📄';
+            font-size: 1.2rem;
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.75rem;
+            }
+            
+            .stat-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .grid-2, .grid-3 {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav button {
+                padding: 10px 20px;
+                font-size: 0.875rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <h1>☕ Cafe Manager Pro</h1>
+            <p>Professional Business Management Suite</p>
+        </div>
+    </div>
+
+    <div class="nav">
+        <div class="nav-container">
+            <button class="active" onclick="switchTab('dashboard')">Dashboard</button>
+            <button onclick="switchTab('finance')">Finance</button>
+            <button onclick="switchTab('inventory')">Inventory</button>
+            <button onclick="switchTab('menu')">Menu</button>
+            <button onclick="switchTab('staff')">Staff</button>
+            <button onclick="switchTab('reports')">Reports</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="dashboard" class="tab-content active"></div>
+        <div id="finance" class="tab-content"></div>
+        <div id="inventory" class="tab-content"></div>
+        <div id="menu" class="tab-content"></div>
+        <div id="staff" class="tab-content"></div>
+        <div id="reports" class="tab-content"></div>
+    </div>
+
+    <div id="modal" class="modal" onclick="closeModalOnOutside(event)">
+        <div class="modal-content">
+            <h2 id="modalTitle"></h2>
+            <div id="modalForm"></div>
+        </div>
+    </div>
+
+    <script>
+        var data = {
+            income: [],
+            expenses: [],
+            inventory: [],
+            menu: [],
+            staff: []
+        };
+
+        var currentModal = null;
+        var editingItem = null;
+
+        function loadData() {
+            var keys = ['income', 'expenses', 'inventory', 'menu', 'staff'];
+            for (var i = 0; i < keys.length; i++) {
+                var stored = localStorage.getItem('cafeData_' + keys[i]);
+                if (stored) {
+                    data[keys[i]] = JSON.parse(stored);
+                }
+            }
+        }
+
+        function saveData(type) {
+            localStorage.setItem('cafeData_' + type, JSON.stringify(data[type]));
+        }
+
+        function switchTab(tab) {
+            var buttons = document.querySelectorAll('.nav button');
+            var contents = document.querySelectorAll('.tab-content');
+
+            for (var i = 0; i < buttons.length; i++) {
+                buttons[i].classList.remove('active');
+            }
+            for (var i = 0; i < contents.length; i++) {
+                contents[i].classList.remove('active');
+            }
+
+            event.target.classList.add('active');
+            document.getElementById(tab).classList.add('active');
+
+            renderTab(tab);
+        }
+
+        function renderDashboard() {
+            var totalIncome = data.income.reduce(function(sum, item) { return sum + parseFloat(item.amount || 0); }, 0);
+            var totalExpenses = data.expenses.reduce(function(sum, item) { return sum + parseFloat(item.amount || 0); }, 0);
+            var netProfit = totalIncome - totalExpenses;
+            var lowStockItems = data.inventory.filter(function(item) {
+                return parseFloat(item.quantity) < parseFloat(item.minQuantity || 10);
+            }).length;
+
+            document.getElementById('dashboard').innerHTML =
+                '<div class="stat-grid">' +
+                '<div class="stat-card green"><div class="stat-label">Total Income</div><div class="stat-value green">$' + totalIncome.toFixed(2) + '</div></div>' +
+                '<div class="stat-card red"><div class="stat-label">Total Expenses</div><div class="stat-value red">$' + totalExpenses.toFixed(2) + '</div></div>' +
+                '<div class="stat-card ' + (netProfit >= 0 ? 'blue' : 'red') + '"><div class="stat-label">Net Profit</div><div class="stat-value ' + (netProfit >= 0 ? 'blue' : 'red') + '">$' + netProfit.toFixed(2) + '</div></div>' +
+                '<div class="stat-card purple"><div class="stat-label">Low Stock Items</div><div class="stat-value purple">' + lowStockItems + '</div></div>' +
+                '</div>' +
+                '<div class="card"><div class="card-header"><h2>📊 Quick Overview</h2></div>' +
+                '<p style="color: #6b7280; line-height: 1.6;">Welcome to your cafe management dashboard. Monitor your business performance, track inventory, manage staff, and generate comprehensive reports all in one place.</p></div>';
+        }
+
+        function renderFinance() {
+            var html = '<div class="card"><div class="card-header"><h2>💰 Income</h2>' +
+                '<button class="btn btn-green" onclick="openModal(\'income\')">+ Add Income</button></div>';
+
+            if (data.income.length === 0) {
+                html += '<p style="color: #9ca3af;">No income records yet. Click "Add Income" to get started.</p>';
+            } else {
+                for (var i = 0; i < data.income.length; i++) {
+                    var item = data.income[i];
+                    html += '<div class="record"><div><strong>' + item.source + '</strong><br><small style="color: #6b7280;">' + item.date + '</small></div>' +
+                        '<div><strong style="color: #10b981; font-size: 1.125rem;">$' + parseFloat(item.amount).toFixed(2) + '</strong>' +
+                        '<div style="margin-top: 8px;"><button class="btn btn-primary btn-small" onclick="editItem(\'income\', ' + item.id + ')">Edit</button> ' +
+                        '<button class="btn btn-red btn-small" onclick="deleteItem(\'income\', ' + item.id + ')">Delete</button></div></div></div>';
+                }
+            }
+            html += '</div>';
+
+            html += '<div class="card"><div class="card-header"><h2>💸 Expenses</h2>' +
+                '<button class="btn btn-red" onclick="openModal(\'expense\')">+ Add Expense</button></div>';
+
+            if (data.expenses.length === 0) {
+                html += '<p style="color: #9ca3af;">No expense records yet. Click "Add Expense" to get started.</p>';
+            } else {
+                for (var i = 0; i < data.expenses.length; i++) {
+                    var item = data.expenses[i];
+                    html += '<div class="record"><div><strong>' + item.category + '</strong><br><small style="color: #6b7280;">' + item.date + '</small></div>' +
+                        '<div><strong style="color: #ef4444; font-size: 1.125rem;">$' + parseFloat(item.amount).toFixed(2) + '</strong>' +
+                        '<div style="margin-top: 8px;"><button class="btn btn-primary btn-small" onclick="editItem(\'expense\', ' + item.id + ')">Edit</button> ' +
+                        '<button class="btn btn-red btn-small" onclick="deleteItem(\'expense\', ' + item.id + ')">Delete</button></div></div></div>';
+                }
+            }
+            html += '</div>';
+
+            document.getElementById('finance').innerHTML = html;
+        }
+
+        function renderInventory() {
+            var html = '<div class="card"><div class="card-header"><h2>📦 Inventory Management</h2>' +
+                '<button class="btn btn-primary" onclick="openModal(\'inventory\')">+ Add Item</button></div>';
+
+            var lowStock = data.inventory.filter(function(item) {
+                return parseFloat(item.quantity) < parseFloat(item.minQuantity || 10);
+            });
+
+            if (lowStock.length > 0) {
+                html += '<div class="alert warning">⚠️ <strong>' + lowStock.length + '</strong> item(s) are running low on stock!</div>';
+            }
+
+            if (data.inventory.length === 0) {
+                html += '<p style="color: #9ca3af;">No inventory items yet. Click "Add Item" to get started.</p>';
+            } else {
+                html += '<div class="grid-3">';
+                for (var i = 0; i < data.inventory.length; i++) {
+                    var item = data.inventory[i];
+                    var isLowStock = parseFloat(item.quantity) < parseFloat(item.minQuantity || 10);
+                    html += '<div class="item-card"><h3>' + item.name + '</h3>' +
+                        '<p style="margin: 12px 0; color: #6b7280;"><strong>Quantity:</strong> <span class="' + (isLowStock ? 'low-stock' : '') + '">' + item.quantity + ' ' + item.unit + '</span></p>' +
+                        '<p style="margin: 12px 0; color: #6b7280;"><strong>Supplier:</strong> ' + item.supplier + '</p>' +
+                        '<p style="margin: 12px 0; color: #6b7280;"><strong>Cost:</strong> $' + parseFloat(item.cost).toFixed(2) + ' per ' + item.unit + '</p>' +
+                        '<p style="margin: 12px 0; color: #6b7280;"><strong>Total Value:</strong> $' + (parseFloat(item.quantity) * parseFloat(item.cost)).toFixed(2) + '</p>' +
+                        '<div style="margin-top: 16px;"><button class="btn btn-primary btn-small" onclick="editItem(\'inventory\', ' + item.id + ')">Edit</button> ' +
+                        '<button class="btn btn-red btn-small" onclick="deleteItem(\'inventory\', ' + item.id + ')">Delete</button></div></div>';
+                }
+                html += '</div>';
+            }
+            html += '</div>';
+
+            var inventoryValue = data.inventory.reduce(function(sum, item) {
+                return sum + (parseFloat(item.quantity) * parseFloat(item.cost));
+            }, 0);
+
+            html += '<div class="stat-grid"><div class="stat-card blue" style="grid-column: 1 / -1;"><div class="stat-label">Total Inventory Value</div><div class="stat-value blue">$' + inventoryValue.toFixed(2) + '</div></div></div>';
+
+            document.getElementById('inventory').innerHTML = html;
+        }
+
+        function renderMenu() {
+            var html = '<div class="card"><div class="card-header"><h2>🍽️ Menu Items</h2>' +
+                '<button class="btn btn-primary" onclick="openModal(\'menu\')">+ Add Menu Item</button></div>';
+
+            if (data.menu.length === 0) {
+                html += '<p style="color: #9ca3af;">No menu items yet. Click "Add Menu Item" to get started.</p>';
+            } else {
+                html += '<div class="grid-3">';
+                for (var i = 0; i < data.menu.length; i++) {
+                    var item = data.menu[i];
+                    html += '<div class="item-card"><h3>' + item.name + '</h3>' +
+                        (item.description ? '<p style="color: #6b7280; margin: 8px 0; font-size: 0.875rem;">' + item.description + '</p>' : '') +
+                        '<p style="margin: 12px 0;"><strong style="color: #8b5cf6; font-size: 1.5rem;">$' + parseFloat(item.price).toFixed(2) + '</strong></p>' +
+                        '<p style="color: #6b7280; margin: 8px 0;"><strong>Sales:</strong> ' + (item.sales || 0) + ' orders</p>' +
+                        '<p style="color: #6b7280;"><strong>Revenue:</strong> $' + (parseFloat(item.price) * parseInt(item.sales || 0)).toFixed(2) + '</p>' +
+                        '<div style="margin-top: 16px;"><button class="btn btn-primary btn-small" onclick="editItem(\'menu\', ' + item.id + ')">Edit</button> ' +
+                        '<button class="btn btn-red btn-small" onclick="deleteItem(\'menu\', ' + item.id + ')">Delete</button></div></div>';
+                }
+                html += '</div>';
+            }
+            html += '</div>';
+
+            document.getElementById('menu').innerHTML = html;
+        }
+
+        function renderStaff() {
+            var html = '<div class="card"><div class="card-header"><h2>👥 Staff Management</h2>' +
+                '<button class="btn btn-primary" onclick="openModal(\'staff\')">+ Add Staff Member</button></div>';
+
+            if (data.staff.length === 0) {
+                html += '<p style="color: #9ca3af;">No staff members yet. Click "Add Staff Member" to get started.</p>';
+            } else {
+                html += '<div class="grid-2">';
+                for (var i = 0; i < data.staff.length; i++) {
+                    var item = data.staff[i];
+                    html += '<div class="item-card"><h3>' + item.name + '</h3>' +
+                        '<p style="color: #6b7280; margin: 8px 0;"><span class="badge badge-success">' + item.position + '</span></p>' +
+                        '<p style="margin: 12px 0; color: #6b7280;"><strong>📞 Phone:</strong> ' + item.phone + '</p>' +
+                        (item.email ? '<p style="margin: 12px 0; color: #6b7280;"><strong>✉️ Email:</strong> ' + item.email + '</p>' : '') +
+                        '<p style="margin: 12px 0; color: #6b7280;"><strong>💰 Salary:</strong> $' + parseFloat(item.salary).toFixed(2) + '/month</p>' +
+                        (item.schedule ? '<p style="margin: 12px 0; color: #6b7280;"><strong>🕐 Schedule:</strong> ' + item.schedule + '</p>' : '') +
+                        '<div style="margin-top: 16px;"><button class="btn btn-primary btn-small" onclick="editItem(\'staff\', ' + item.id + ')">Edit</button> ' +
+                        '<button class="btn btn-red btn-small" onclick="deleteItem(\'staff\', ' + item.id + ')">Delete</button></div></div>';
+                }
+                html += '</div>';
+            }
+            html += '</div>';
+
+            var totalSalaries = data.staff.reduce(function(sum, item) {
+                return sum + parseFloat(item.salary || 0);
+            }, 0);
+
+            html += '<div class="stat-grid"><div class="stat-card purple" style="grid-column: 1 / -1;"><div class="stat-label">Total Monthly Salaries</div><div class="stat-value purple">$' + totalSalaries.toFixed(2) + '</div></div></div>';
+
+            document.getElementById('staff').innerHTML = html;
+        }
+
+        function renderReports() {
+            var totalIncome = data.income.reduce(function(sum, item) { return sum + parseFloat(item.amount || 0); }, 0);
+            var totalExpenses = data.expenses.reduce(function(sum, item) { return sum + parseFloat(item.amount || 0); }, 0);
+            var netProfit = totalIncome - totalExpenses;
+            var inventoryValue = data.inventory.reduce(function(sum, item) {
+                return sum + (parseFloat(item.quantity) * parseFloat(item.cost));
+            }, 0);
+            var totalSalaries = data.staff.reduce(function(sum, item) {
+                return sum + parseFloat(item.salary || 0);
+            }, 0);
+            var menuRevenue = data.menu.reduce(function(sum, item) {
+                return sum + (parseFloat(item.price) * parseInt(item.sales || 0));
+            }, 0);
+
+            var html = '<div class="card"><div class="card-header"><h2>📈 Business Reports</h2>' +
+                '<button class="pdf-download-btn" onclick="downloadPDF()">Download PDF Report</button></div>';
+
+            html += '<div class="stat-grid">' +
+                '<div class="stat-card green"><div class="stat-label">Total Income</div><div class="stat-value green">$' + totalIncome.toFixed(2) + '</div></div>' +
+                '<div class="stat-card red"><div class="stat-label">Total Expenses</div><div class="stat-value red">$' + totalExpenses.toFixed(2) + '</div></div>' +
+                '<div class="stat-card ' + (netProfit >= 0 ? 'blue' : 'red') + '"><div class="stat-label">Net Profit</div><div class="stat-value ' + (netProfit >= 0 ? 'blue' : 'red') + '">$' + netProfit.toFixed(2) + '</div></div>' +
+                '<div class="stat-card purple"><div class="stat-label">Inventory Value</div><div class="stat-value purple">$' + inventoryValue.toFixed(2) + '</div></div>' +
+                '<div class="stat-card blue"><div class="stat-label">Monthly Salaries</div><div class="stat-value blue">$' + totalSalaries.toFixed(2) + '</div></div>' +
+                '<div class="stat-card green"><div class="stat-label">Menu Revenue</div><div class="stat-value green">$' + menuRevenue.toFixed(2) + '</div></div>' +
+                '</div>';
+
+            html += '<div class="grid-2">';
+            
+            html += '<div class="card"><h3>💰 Financial Summary</h3>' +
+                '<p style="margin: 8px 0; color: #6b7280;">Total Income Records: <strong>' + data.income.length + '</strong></p>' +
+                '<p style="margin: 8px 0; color: #6b7280;">Total Expense Records: <strong>' + data.expenses.length + '</strong></p>' +
+                '<p style="margin: 8px 0; color: #6b7280;">Profit Margin: <strong>' + (totalIncome > 0 ? ((netProfit / totalIncome) * 100).toFixed(1) : '0') + '%</strong></p></div>';
+
+            html += '<div class="card"><h3>📦 Inventory Summary</h3>' +
+                '<p style="margin: 8px 0; color: #6b7280;">Total Items: <strong>' + data.inventory.length + '</strong></p>' +
+                '<p style="margin: 8px 0; color: #6b7280;">Low Stock Items: <strong class="low-stock">' + 
+                data.inventory.filter(function(item) { return parseFloat(item.quantity) < parseFloat(item.minQuantity || 10); }).length + '</strong></p>' +
+                '<p style="margin: 8px 0; color: #6b7280;">Total Value: <strong>$' + inventoryValue.toFixed(2) + '</strong></p></div>';
+
+            html += '<div class="card"><h3>🍽️ Menu Summary</h3>' +
+                '<p style="margin: 8px 0; color: #6b7280;">Total Menu Items: <strong>' + data.menu.length + '</strong></p>' +
+                '<p style="margin: 8px 0; color: #6b7280;">Total Sales: <strong>' + 
+                data.menu.reduce(function(sum, item) { return sum + parseInt(item.sales || 0); }, 0) + ' orders</strong></p>' +
+                '<p style="margin: 8px 0; color: #6b7280;">Menu Revenue: <strong>$' + menuRevenue.toFixed(2) + '</strong></p></div>';
+
+            html += '<div class="card"><h3>👥 Staff Summary</h3>' +
+                '<p style="margin: 8px 0; color: #6b7280;">Total Staff: <strong>' + data.staff.length + '</strong></p>' +
+                '<p style="margin: 8px 0; color: #6b7280;">Monthly Payroll: <strong>$' + totalSalaries.toFixed(2) + '</strong></p>' +
+                '<p style="margin: 8px 0; color: #6b7280;">Avg Salary: <strong>$' + 
+                (data.staff.length > 0 ? (totalSalaries / data.staff.length).toFixed(2) : '0.00') + '</strong></p></div>';
+
+            html += '</div></div>';
+
+            document.getElementById('reports').innerHTML = html;
+        }
+
+        function downloadPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Calculate all metrics
+            var totalIncome = data.income.reduce(function(sum, item) { return sum + parseFloat(item.amount || 0); }, 0);
+            var totalExpenses = data.expenses.reduce(function(sum, item) { return sum + parseFloat(item.amount || 0); }, 0);
+            var netProfit = totalIncome - totalExpenses;
+            var inventoryValue = data.inventory.reduce(function(sum, item) {
+                return sum + (parseFloat(item.quantity) * parseFloat(item.cost));
+            }, 0);
+            var totalSalaries = data.staff.reduce(function(sum, item) {
+                return sum + parseFloat(item.salary || 0);
+            }, 0);
+            var menuRevenue = data.menu.reduce(function(sum, item) {
+                return sum + (parseFloat(item.price) * parseInt(item.sales || 0));
+            }, 0);
+
+            // Title
+            doc.setFillColor(139, 92, 246);
+            doc.rect(0, 0, 210, 35, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(24);
+            doc.setFont(undefined, 'bold');
+            doc.text('Cafe Manager Pro', 105, 15, { align: 'center' });
+            doc.setFontSize(14);
+            doc.setFont(undefined, 'normal');
+            doc.text('Business Performance Report', 105, 25, { align: 'center' });
+            
+            // Date
+            var today = new Date().toLocaleDateString();
+            doc.setFontSize(10);
+            doc.text('Generated: ' + today, 105, 31, { align: 'center' });
+
+            // Reset text color
+            doc.setTextColor(0, 0, 0);
+            var yPos = 45;
+
+            // Financial Summary
+            doc.setFontSize(16);
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(139, 92, 246);
+            doc.text('Financial Overview', 20, yPos);
+            yPos += 10;
+
+            doc.setFontSize(11);
+            doc.setFont(undefined, 'normal');
+            doc.setTextColor(0, 0, 0);
+            
+            var financialData = [
+                ['Total Income', '$' + totalIncome.toFixed(2)],
+                ['Total Expenses', '$' + totalExpenses.toFixed(2)],
+                ['Net Profit', '$' + netProfit.toFixed(2)],
+                ['Profit Margin', (totalIncome > 0 ? ((netProfit / totalIncome) * 100).toFixed(1) : '0') + '%']
+            ];
+
+            doc.autoTable({
+                startY: yPos,
+                head: [['Metric', 'Value']],
+                body: financialData,
+                theme: 'striped',
+                headStyles: { fillColor: [139, 92, 246], textColor: 255 },
+                margin: { left: 20, right: 20 }
+            });
+
+            yPos = doc.lastAutoTable.finalY + 15;
+
+            // Inventory Summary
+            doc.setFontSize(16);
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(139, 92, 246);
+            doc.text('Inventory Overview', 20, yPos);
+            yPos += 10;
+
+            var inventoryData = [
+                ['Total Items', data.inventory.length.toString()],
+                ['Total Value', '$' + inventoryValue.toFixed(2)],
+                ['Low Stock Items', data.inventory.filter(function(item) { 
+                    return parseFloat(item.quantity) < parseFloat(item.minQuantity || 10); 
+                }).length.toString()]
+            ];
+
+            doc.autoTable({
+                startY: yPos,
+                head: [['Metric', 'Value']],
+                body: inventoryData,
+                theme: 'striped',
+                headStyles: { fillColor: [139, 92, 246], textColor: 255 },
+                margin: { left: 20, right: 20 }
+            });
+
+            yPos = doc.lastAutoTable.finalY + 15;
+
+            // Menu Summary
+            doc.setFontSize(16);
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(139, 92, 246);
+            doc.text('Menu Performance', 20, yPos);
+            yPos += 10;
+
+            var menuData = [
+                ['Total Menu Items', data.menu.length.toString()],
+                ['Total Sales', data.menu.reduce(function(sum, item) { 
+                    return sum + parseInt(item.sales || 0); 
+                }, 0).toString() + ' orders'],
+                ['Menu Revenue', '$' + menuRevenue.toFixed(2)]
+            ];
+
+            doc.autoTable({
+                startY: yPos,
+                head: [['Metric', 'Value']],
+                body: menuData,
+                theme: 'striped',
+                headStyles: { fillColor: [139, 92, 246], textColor: 255 },
+                margin: { left: 20, right: 20 }
+            });
+
+            yPos = doc.lastAutoTable.finalY + 15;
+
+            // Staff Summary
+            doc.setFontSize(16);
+            doc.setFont(undefined, 'bold');
+            doc.setTextColor(139, 92, 246);
+            doc.text('Staff Overview', 20, yPos);
+            yPos += 10;
+
+            var staffData = [
+                ['Total Staff', data.staff.length.toString()],
+                ['Monthly Payroll', '$' + totalSalaries.toFixed(2)],
+                ['Average Salary', '$' + (data.staff.length > 0 ? (totalSalaries / data.staff.length).toFixed(2) : '0.00')]
+            ];
+
+            doc.autoTable({
+                startY: yPos,
+                head: [['Metric', 'Value']],
+                body: staffData,
+                theme: 'striped',
+                headStyles: { fillColor: [139, 92, 246], textColor: 255 },
+                margin: { left: 20, right: 20 }
+            });
+
+            // Footer
+            var pageCount = doc.internal.getNumberOfPages();
+            doc.setFontSize(9);
+            doc.setTextColor(128, 128, 128);
+            doc.text('Cafe Manager Pro - Confidential Business Report', 105, 285, { align: 'center' });
+
+            // Save PDF
+            doc.save('Cafe_Manager_Report_' + today.replace(/\//g, '-') + '.pdf');
+        }
+
+        function renderTab(tab) {
+            switch(tab) {
+                case 'dashboard':
+                    renderDashboard();
+                    break;
+                case 'finance':
+                    renderFinance();
+                    break;
+                case 'inventory':
+                    renderInventory();
+                    break;
+                case 'menu':
+                    renderMenu();
+                    break;
+                case 'staff':
+                    renderStaff();
+                    break;
+                case 'reports':
+                    renderReports();
+                    break;
+            }
+        }
+
+        function openModal(type, item) {
+            currentModal = type;
+            editingItem = item || null;
+
+            var title = (item ? 'Edit ' : 'Add ') + type.charAt(0).toUpperCase() + type.slice(1);
+            document.getElementById('modalTitle').textContent = title;
+
+            var formHTML = '';
+
+            if (type === 'income') {
+                formHTML = '<div class="form-group"><label>Date *</label>' +
+                    '<input type="date" id="date" value="' + (item ? item.date : new Date().toISOString().split('T')[0]) + '"></div>' +
+                    '<div class="form-group"><label>Source *</label>' +
+                    '<input type="text" id="source" value="' + (item ? item.source : '') + '" placeholder="e.g., Food Sales"></div>' +
+                    '<div class="form-group"><label>Amount ($) *</label>' +
+                    '<input type="number" id="amount" value="' + (item ? item.amount : '') + '" step="0.01" placeholder="0.00"></div>';
+            } else if (type === 'expense') {
+                formHTML = '<div class="form-group"><label>Date *</label>' +
+                    '<input type="date" id="date" value="' + (item ? item.date : new Date().toISOString().split('T')[0]) + '"></div>' +
+                    '<div class="form-group"><label>Category *</label>' +
+                    '<select id="category"><option value="">Select Category</option>' +
+                    '<option value="Ingredients" ' + (item && item.category === 'Ingredients' ? 'selected' : '') + '>Ingredients</option>' +
+                    '<option value="Utilities" ' + (item && item.category === 'Utilities' ? 'selected' : '') + '>Utilities</option>' +
+                    '<option value="Staff" ' + (item && item.category === 'Staff' ? 'selected' : '') + '>Staff</option>' +
+                    '<option value="Rent" ' + (item && item.category === 'Rent' ? 'selected' : '') + '>Rent</option>' +
+                    '<option value="Maintenance" ' + (item && item.category === 'Maintenance' ? 'selected' : '') + '>Maintenance</option>' +
+                    '<option value="Other" ' + (item && item.category === 'Other' ? 'selected' : '') + '>Other</option></select></div>' +
+                    '<div class="form-group"><label>Amount ($) *</label>' +
+                    '<input type="number" id="amount" value="' + (item ? item.amount : '') + '" step="0.01" placeholder="0.00"></div>';
+            } else if (type === 'inventory') {
+                formHTML = '<div class="form-group"><label>Item Name *</label>' +
+                    '<input type="text" id="name" value="' + (item ? item.name : '') + '" placeholder="e.g., Coffee Beans"></div>' +
+                    '<div class="grid-2"><div class="form-group"><label>Quantity *</label>' +
+                    '<input type="number" id="quantity" value="' + (item ? item.quantity : '') + '" step="0.01"></div>' +
+                    '<div class="form-group"><label>Unit *</label>' +
+                    '<input type="text" id="unit" value="' + (item ? item.unit : '') + '" placeholder="kg, lbs"></div></div>' +
+                    '<div class="form-group"><label>Supplier *</label>' +
+                    '<input type="text" id="supplier" value="' + (item ? item.supplier : '') + '"></div>' +
+                    '<div class="form-group"><label>Cost per Unit ($) *</label>' +
+                    '<input type="number" id="cost" value="' + (item ? item.cost : '') + '" step="0.01"></div>' +
+                    '<div class="form-group"><label>Min Quantity</label>' +
+                    '<input type="number" id="minQuantity" value="' + (item ? item.minQuantity : '10') + '" step="0.01"></div>';
+            } else if (type === 'menu') {
+                formHTML = '<div class="form-group"><label>Item Name *</label>' +
+                    '<input type="text" id="name" value="' + (item ? item.name : '') + '" placeholder="e.g., Cappuccino"></div>' +
+                    '<div class="form-group"><label>Description</label>' +
+                    '<textarea id="description" rows="2">' + (item ? item.description || '' : '') + '</textarea></div>' +
+                    '<div class="form-group"><label>Price ($) *</label>' +
+                    '<input type="number" id="price" value="' + (item ? item.price : '') + '" step="0.01"></div>' +
+                    '<div class="form-group"><label>Sales Count</label>' +
+                    '<input type="number" id="sales" value="' + (item ? item.sales || '0' : '0') + '"></div>';
+            } else if (type === 'staff') {
+                formHTML = '<div class="form-group"><label>Full Name *</label>' +
+                    '<input type="text" id="name" value="' + (item ? item.name : '') + '"></div>' +
+                    '<div class="form-group"><label>Position *</label>' +
+                    '<input type="text" id="position" value="' + (item ? item.position : '') + '"></div>' +
+                    '<div class="form-group"><label>Phone *</label>' +
+                    '<input type="tel" id="phone" value="' + (item ? item.phone : '') + '"></div>' +
+                    '<div class="form-group"><label>Email</label>' +
+                    '<input type="email" id="email" value="' + (item ? item.email || '' : '') + '"></div>' +
+                    '<div class="form-group"><label>Monthly Salary ($) *</label>' +
+                    '<input type="number" id="salary" value="' + (item ? item.salary : '') + '" step="0.01"></div>' +
+                    '<div class="form-group"><label>Schedule</label>' +
+                    '<input type="text" id="schedule" value="' + (item ? item.schedule || '' : '') + '" placeholder="e.g., Mon-Fri 9am-5pm"></div>';
+            }
+
+            formHTML += '<div class="form-actions">' +
+                '<button type="button" class="btn btn-outline" onclick="closeModal()">Cancel</button>' +
+                '<button type="button" class="btn btn-primary" onclick="saveModal()">' + (item ? 'Update' : 'Add') + '</button>' +
+                '</div>';
+
+            document.getElementById('modalForm').innerHTML = formHTML;
+            document.getElementById('modal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+            currentModal = null;
+            editingItem = null;
+        }
+
+        function closeModalOnOutside(event) {
+            if (event.target.id === 'modal') {
+                closeModal();
+            }
+        }
+
+        function saveModal() {
+            var formData = {};
+
+            document.querySelectorAll('#modalForm input, #modalForm select, #modalForm textarea').forEach(function(input) {
+                if (input.id) {
+                    formData[input.id] = input.value;
+                }
+            });
+
+            if (currentModal === 'income' && (!formData.source || !formData.amount)) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            if (currentModal === 'expense' && (!formData.category || !formData.amount)) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            if (currentModal === 'inventory' && (!formData.name || !formData.quantity || !formData.unit || !formData.supplier || !formData.cost)) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            if (currentModal === 'menu' && (!formData.name || !formData.price)) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            if (currentModal === 'staff' && (!formData.name || !formData.position || !formData.phone || !formData.salary)) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            if (editingItem) {
+                var type = currentModal === 'expense' ? 'expenses' : currentModal;
+                var index = -1;
+                for (var i = 0; i < data[type].length; i++) {
+                    if (data[type][i].id === editingItem.id) {
+                        index = i;
+                        break;
+                    }
+                }
+                if (index !== -1) {
+                    formData.id = editingItem.id;
+                    data[type][index] = formData;
+                }
+            } else {
+                var type = currentModal === 'expense' ? 'expenses' : currentModal;
+                formData.id = Date.now();
+                data[type].push(formData);
+            }
+
+            var type = currentModal === 'expense' ? 'expenses' : currentModal;
+            saveData(type);
+
+            var activeTab = document.querySelector('.nav button.active').textContent.toLowerCase();
+            renderTab(activeTab);
+
+            closeModal();
+        }
+
+        function editItem(type, id) {
+            var typeKey = type === 'expense' ? 'expenses' : type;
+            var item = null;
+            for (var i = 0; i < data[typeKey].length; i++) {
+                if (data[typeKey][i].id === id) {
+                    item = data[typeKey][i];
+                    break;
+                }
+            }
+            if (item) {
+                openModal(type, item);
+            }
+        }
+
+        function deleteItem(type, id) {
+            if (!confirm('Are you sure you want to delete this item?')) return;
+
+            var typeKey = type === 'expense' ? 'expenses' : type;
+            data[typeKey] = data[typeKey].filter(function(item) {
+                return item.id !== id;
+            });
+            saveData(typeKey);
+
+            var activeTab = document.querySelector('.nav button.active').textContent.toLowerCase();
+            renderTab(activeTab);
+        }
+
+        // Initialize app
+        window.onload = function() {
+            loadData();
+            renderDashboard();
+            console.log('✅ Cafe Manager Pro loaded with premium design!');
+            
+            // Register Service Worker for PWA
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(reg => console.log('✅ Service Worker registered'))
+                    .catch(err => console.log('❌ Service Worker registration failed:', err));
+            }
+            
+            // PWA Install Prompt
+            let deferredPrompt;
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                showInstallPrompt();
+            });
+            
+            function showInstallPrompt() {
+                const installBanner = document.createElement('div');
+                installBanner.style.cssText = 'position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%); color: white; padding: 16px 24px; border-radius: 12px; box-shadow: 0 8px 32px rgba(139, 92, 246, 0.4); z-index: 9999; display: flex; gap: 12px; align-items: center; max-width: 90%; animation: slideUp 0.3s ease;';
+                installBanner.innerHTML = '<span style="font-weight: 600;">📱 Install Cafe Manager Pro as an app!</span><button style="background: white; color: #8b5cf6; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer;" onclick="installApp()">Install</button><button style="background: transparent; color: white; border: 1px solid white; padding: 8px 16px; border-radius: 8px; font-weight: 600; cursor: pointer;" onclick="this.parentElement.remove()">Later</button>';
+                document.body.appendChild(installBanner);
+                
+                window.installApp = function() {
+                    if (deferredPrompt) {
+                        deferredPrompt.prompt();
+                        deferredPrompt.userChoice.then((choiceResult) => {
+                            if (choiceResult.outcome === 'accepted') {
+                                console.log('✅ App installed');
+                            }
+                            deferredPrompt = null;
+                            installBanner.remove();
+                        });
+                    }
+                };
+            }
+        };
+    </script>
+    <style>
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+    </style>
+</body>
+</html>
